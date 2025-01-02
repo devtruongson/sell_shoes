@@ -1,0 +1,39 @@
+.wrapper {
+    width: 60vw;
+    max-width: 900px;
+    background-color: #fff;
+    color: black;
+    overflow-x: auto;
+    max-height: 550px;
+    overflow-y: hidden;
+    padding: 2rem;
+    display: flex;
+    border-radius: 20px;
+    img{
+        border-style: none;
+        vertical-align: middle;
+        max-width: 100%;
+        height: auto;
+    }
+    .col {
+        width: 50%;
+        color:black;
+    }
+}
+
+
+@media (max-width: 575.98px) { 
+    .wrapper{
+        width: 100vw;
+        flex-direction: column;
+        max-height: 100vh;
+
+        .col{
+            width: 100%;
+        }
+
+        img{
+            display: none;
+        }
+    }
+}

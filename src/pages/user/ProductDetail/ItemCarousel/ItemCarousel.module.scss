@@ -1,0 +1,24 @@
+// style={{width: '320px', height: '420px', objectFit: 'cover', borderRadius: '8px'}}
+
+.wrapper {
+    margin-left: 16px;
+
+    .img {
+        width        : 320px;
+        // height: 420px;
+        object-fit   : cover;
+        border-radius: 8px;
+    }
+}
+
+
+@media (max-width: 767px) {
+    .wrapper {
+        .img {
+            width     : 100%;
+            height    : 150px;
+            object-fit: contain;
+        }
+    }
+
+}
