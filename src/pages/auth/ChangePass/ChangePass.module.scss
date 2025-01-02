@@ -20,3 +20,20 @@
         height: auto;
     }
 }
+
+
+@media (max-width: 575.98px) { 
+    .wrapper{
+        width: 100vw;
+        flex-direction: column;
+        max-height: 100vh;
+
+        .col{
+            width: 100%;
+        }
+
+        img{
+            display: none;
+        }
+    }
+}
