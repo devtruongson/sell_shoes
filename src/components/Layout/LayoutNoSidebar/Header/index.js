@@ -89,7 +89,12 @@ function Header() {
         navigate(`/collection/type=${type}`);
     };
 
-    console.log(categories)
+    const [openedCategory, setOpenedCategory] = useState(null); // State to track which category is open
+
+    const handleCategoryClickOutSide = (categoryIndex) => {
+        // Toggle the category open/close
+        setOpenedCategory(prevIndex => prevIndex === categoryIndex ? null : categoryIndex);
+    };
     
     return (
         <div className={cx("wrapper")}>
@@ -125,25 +130,39 @@ function Header() {
                                 className={cx("icon-close")}
                             />
                             <div className={cx("list-categorys")}>
-                                <div className={cx("item-list-category")}>
-                                    Tất cả
-                                </div>
-                                {categories.map((item, index) => {
+            {categories.map((item, index) => {
+                return (
+                    <div
+                        key={index}
+                        className={cx("item-list-category")}
+                    >
+                        <strong 
+                            style={{ fontSize: 16 }}
+                            onClick={() => handleCategoryClickOutSide(index)} // Handle category click
+                        >
+                            {item.productCategoryName}
+                        </strong>
+                        {openedCategory === index && ( // Show item list only if the category is open
+                            <ul className={cx("")}>
+                                {item.listProductType.map((itemChild, index) => {
                                     return (
-                                        <div
+                                        <li
                                             key={index}
-                                            className={cx("item-list-category")}
+                                            onClick={() => {
+                                                handleCategoryClickUrl(itemChild.productTypeName);
+                                                setOpenSidebar(true);
+                                            }}
                                         >
-                                            <strong style={{fontSize: 16}}>{item.productCategoryName}</strong>
-                                            <ul className={cx("")}>
-                                                {item.listProductType.map((itemChild, index) => {
-                                                    return  <li onClick={() => handleCategoryClickUrl(itemChild.productTypeName)}>{itemChild.productTypeName}</li>
-                                                }) }
-                                            </ul>
-                                        </div>
+                                            {itemChild.productTypeName}
+                                        </li>
                                     );
                                 })}
-                            </div>
+                            </ul>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
                         </div>
                     </div>
                 </>

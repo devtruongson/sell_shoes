@@ -559,3 +559,16 @@
         }
     }
 }
+
+@media (max-width: 575.98px) { 
+    .list-product-filter {
+        overflow: hidden !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+
+        &>div{
+            width: 50% !important;
+        }
+    }
+}

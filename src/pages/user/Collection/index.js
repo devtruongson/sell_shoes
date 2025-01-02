@@ -1,23 +1,23 @@
 import axios from 'axios';
 import classNames from "classnames/bind";
 import { useEffect, useState } from "react";
+import { BsCheck } from 'react-icons/bs';
 import "react-multi-carousel/lib/styles.css";
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import { createCartItemNonUser, increaseQuantityCartItemNonUser } from '~/redux/api/nonUserRequest';
+import { createCartItem, getCartProducts, increaseQuantityCartItem } from '~/redux/api/userRequest';
 import {
     filterListProductsState,
-    setListProducts,
     setListProductsState
 } from "~/redux/slices/productSlice";
 import baseUrl from '~/utils/baseUrl';
+import ProductItem from '../Home/ProductItem';
 import styles from './Collection.module.scss';
 import ItemCollection from "./ItemCollection";
-import { createCartItem, getCartProducts, increaseQuantityCartItem } from '~/redux/api/userRequest';
-import ProductItem from '../Home/ProductItem';
-import { ToastContainer, toast } from 'react-toastify';
-import { BsCheck } from 'react-icons/bs';
-import { createCartItemNonUser, increaseQuantityCartItemNonUser } from '~/redux/api/nonUserRequest';
 
+let count = 1;
 const cx = classNames.bind(styles)
 function Collection() {
     const listPrices = [{id: 0, name: "Tất cả giá", min: null, max: null}
@@ -34,7 +34,7 @@ function Collection() {
 
     const { id } = useParams()
 
-    const listProducts = useSelector(state => state.product.listProducts)
+    const [listProducts, setListProducts] = useState([]);
     const [currentProducts, setCurrentProducts] = useState([])
     const [productFilter, setProductFilter] = useState([])
     let cartProducts = useSelector(state => state.user?.cart?.cartProducts)
@@ -105,11 +105,13 @@ function Collection() {
         color: '',
         type: [],
     })
+    const [hasRun, setHasRun] = useState(false); 
     const [condititonsSelected, setCondititonsSelected] = useState([]);
     useEffect(() => {
-        if (id)
+        if(id)
             if (!id.includes("type")) {
                 const listFilter = listProducts.filter((item) => item.productCategory === id)
+                console.log(listFilter)
                 setCurrentProducts(listFilter)
                 setProductFilter(listFilter)
                 const types = listFilter.map(item => item.productType).reduce((acc, e) => {
@@ -150,143 +152,244 @@ function Collection() {
     }, [id])
 
     useEffect(() => {
-        if (!id.includes("type")) {
-            if (conditions.size.length === 0 && conditions.color === '' && conditions.type.length === 0 && conditions.price && Object.keys(conditions.price).length === 0) {
-                setProductFilter(currentProducts)
+        const _fetch = async() => {
+            try {
+                const res = await axios.get(`${baseUrl}/api/products/getAllProducts`);
+                setListProducts(res.data.data);
+                if(id)
+                    if (!id.includes("type")) {
+                        const listFilter = res.data.data.filter((item) => item.productCategory === id)
+                        console.log(listFilter)
+                        setCurrentProducts(listFilter)
+                        setProductFilter(listFilter)
+                        const types = listFilter.map(item => item.productType).reduce((acc, e) => {
+                            if (acc.indexOf(e) === -1) {
+                                acc.push(e)
+                            }
+                            return acc
+                        }, []).map(item => ({
+                            name: item,
+                            checked: false
+                        }))
+        
+                        const colors = listFilter
+                            .map(item => item.colors)
+                            .reduce(function (acc, e) {
+                                return acc.concat(e)
+                            }, [])
+                            .reduce((acc2, e2) => {
+                                if (acc2.find(item => item.colorName === e2.colorName) === undefined) {
+                                    acc2.push(e2)
+                                }
+                                return acc2
+                            }, [])
+                            .map(item => ({
+                                colorName: item.colorName,
+                                colorCode: item.colorCode
+                            }))
+                        console.log(colors)
+                        setCategory({ ...category, type: types, color: colors })
+                    }
+                    else {
+                        const productType = id.replace("type=", "")
+                        const listFilter = res.data.data.filter((item) => item.productType === productType)
+                        setCurrentProducts(listFilter)
+                        setProductFilter(listFilter)
+                    }
+                handleRemoveFilter()
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        _fetch();
+    },[])
+
+    useEffect(() => {
+        if(conditions?.price?.id === 0) {
+            const _fetch = async () => {
+                const res = await axios.get(`${baseUrl}/api/products/getAllProducts`);
+                setListProducts(res.data.data);
+                if(id)
+                    if (!id.includes("type")) {
+                        const listFilter = res.data.data.filter((item) => item.productCategory === id)
+                        console.log(listFilter)
+                        setCurrentProducts(listFilter)
+                        setProductFilter(listFilter)
+                        const types = listFilter.map(item => item.productType).reduce((acc, e) => {
+                            if (acc.indexOf(e) === -1) {
+                                acc.push(e)
+                            }
+                            return acc
+                        }, []).map(item => ({
+                            name: item,
+                            checked: false
+                        }))
+        
+                        const colors = listFilter
+                            .map(item => item.colors)
+                            .reduce(function (acc, e) {
+                                return acc.concat(e)
+                            }, [])
+                            .reduce((acc2, e2) => {
+                                if (acc2.find(item => item.colorName === e2.colorName) === undefined) {
+                                    acc2.push(e2)
+                                }
+                                return acc2
+                            }, [])
+                            .map(item => ({
+                                colorName: item.colorName,
+                                colorCode: item.colorCode
+                            }))
+                        console.log(colors)
+                        setCategory({ ...category, type: types, color: colors })
+                    }
+                    else {
+                        const productType = id.replace("type=", "")
+                        const listFilter = res.data.data.filter((item) => item.productType === productType)
+                        setCurrentProducts(listFilter)
+                        setProductFilter(listFilter)
+                    }
+            }
+
+            _fetch();
+        }else{
+            if (!id.includes("type")) {
+                if (conditions.size.length === 0 && conditions.color === '' && conditions.type.length === 0 && conditions.price && Object.keys(conditions.price).length === 0) {
+                    setProductFilter(currentProducts)
+                }
+                else {
+                    let listFilter = [...currentProducts]
+    
+                    if (conditions.type.length !== 0) {
+                        listFilter = currentProducts.filter(item => conditions.type?.includes(item.productType))
+                    }
+    
+                    if (conditions.size.length !== 0) {
+                        let listItemAdapt = []
+                        for (let i = 0; i < listFilter.length; i++) {
+                            let item = { ...listFilter[i] }  // item hiện tại
+    
+                            let colorsSizes = listFilter[i].colors; // list màu của item
+    
+                            let listColorAdapt = []
+    
+                            for (let j = 0; j < colorsSizes.length; j++) {
+                                let colorsSizeItem = { ...colorsSizes[j] }; // màu hiện tại
+    
+                                let sizes = colorsSizes[j].sizes;  // sizes của màu
+                                sizes = sizes.filter(size => conditions.size.includes(size.sizeName)) //filter size
+    
+                                if (sizes.length !== 0) {
+                                    colorsSizeItem.sizes = sizes
+                                    listColorAdapt.push(colorsSizeItem)
+                                }
+                            }
+    
+                            if (listColorAdapt.length !== 0) {
+                                item.colors = listColorAdapt
+                                listItemAdapt.push(item)
+                            }
+                        }
+                        listFilter = listItemAdapt
+                    }
+    
+                    if (conditions.color !== '')
+                        listFilter = listFilter.filter(item => item.colors?.map(color => color.colorName)?.includes(conditions.color))
+    
+                    if(conditions?.price?.id === 0) {
+                    }else{
+                        if(conditions.price && Object.keys(conditions.price).length !== 0)
+                            listFilter = listFilter.filter(item => {
+                                const mainPrice =  item?.exportPrice * (100 - item?.discountPerc) / 100;
+                                if(conditions.price.min){
+                                    if(conditions.price.max){
+                                        if(mainPrice > conditions.price.min && mainPrice < conditions.price.max)
+                                            return true;
+                                        return false;
+                                    }
+                                    else{
+                                        if(mainPrice > conditions.price.min)
+                                            return true;
+                                        return false;
+                                    }
+                                }
+                                else{
+                                    if(conditions.price.max){
+                                        if(mainPrice < conditions.price.max)
+                                            return true;
+                                        return false;
+                                    }
+                                    else{
+                                        return true;
+                                    }
+                                }
+                            })
+                    }
+                    setProductFilter(listFilter)
+                }
             }
             else {
-                let listFilter = [...currentProducts]
-
-                if (conditions.type.length !== 0) {
-                    listFilter = currentProducts.filter(item => conditions.type?.includes(item.productType))
+                if (conditions.size.length === 0 && conditions.color === '' && conditions.type.length === 0 && conditions.price && Object.keys(conditions.price).length === 0) {
+                    setProductFilter(currentProducts)
                 }
-
-                if (conditions.size.length !== 0) {
-                    let listItemAdapt = []
-                    for (let i = 0; i < listFilter.length; i++) {
-                        let item = { ...listFilter[i] }  // item hiện tại
-
-                        let colorsSizes = listFilter[i].colors; // list màu của item
-
-                        let listColorAdapt = []
-
-                        for (let j = 0; j < colorsSizes.length; j++) {
-                            let colorsSizeItem = { ...colorsSizes[j] }; // màu hiện tại
-
-                            let sizes = colorsSizes[j].sizes;  // sizes của màu
-                            sizes = sizes.filter(size => conditions.size.includes(size.sizeName)) //filter size
-
-                            if (sizes.length !== 0) {
-                                colorsSizeItem.sizes = sizes
-                                listColorAdapt.push(colorsSizeItem)
+                else {
+                    let listFilter = [...currentProducts]
+    
+                    if (conditions.size.length !== 0) {
+                        let listItemAdapt = []
+                        for (let i = 0; i < listFilter.length; i++) {
+                            let item = { ...listFilter[i] }  // item hiện tại
+    
+                            let colorsSizes = listFilter[i].colors; // list màu của item
+    
+                            let listColorAdapt = []
+    
+                            for (let j = 0; j < colorsSizes.length; j++) {
+                                let colorsSizeItem = { ...colorsSizes[j] }; // màu hiện tại
+    
+                                let sizes = colorsSizes[j].sizes;  // sizes của màu
+                                sizes = sizes.filter(size => conditions.size.includes(size.sizeName)) //filter size
+    
+                                if (sizes.length !== 0) {
+                                    colorsSizeItem.sizes = sizes
+                                    listColorAdapt.push(colorsSizeItem)
+                                }
+                            }
+    
+                            if (listColorAdapt.length !== 0) {
+                                item.colors = listColorAdapt
+                                listItemAdapt.push(item)
                             }
                         }
-
-                        if (listColorAdapt.length !== 0) {
-                            item.colors = listColorAdapt
-                            listItemAdapt.push(item)
-                        }
+                        listFilter = listItemAdapt
                     }
-                    listFilter = listItemAdapt
-                }
-
-                if (conditions.color !== '')
-                    listFilter = listFilter.filter(item => item.colors?.map(color => color.colorName)?.includes(conditions.color))
-
-                if(conditions.price && Object.keys(conditions.price).length !== 0)
-                    listFilter = listFilter.filter(item => {
-                        const mainPrice =  item?.exportPrice * (100 - item?.discountPerc) / 100;
-                        if(conditions.price.min){
-                            if(conditions.price.max){
-                                if(mainPrice > conditions.price.min && mainPrice < conditions.price.max)
-                                    return true;
-                                return false;
+    
+                    if (conditions.color !== '')
+                        listFilter = listFilter.filter(item => item.colors?.map(color => color.colorName)?.includes(conditions.color))
+    
+                    if(conditions.price && Object.keys(conditions.price).length !== 0)
+                        listFilter = listFilter.filter(item => {
+                            const mainPrice =  item?.exportPrice * (100 - item?.discountPerc) / 100;
+                            if(conditions.price.min){
+                                if(conditions.price.max){
+                                    if(mainPrice > conditions.price.min && mainPrice < conditions.price.max)
+                                        return true;
+                                    return false;
+                                }
+                                else{
+                                    if(mainPrice > conditions.price.min)
+                                        return true;
+                                    return false;
+                                }
                             }
                             else{
-                                if(mainPrice > conditions.price.min)
-                                    return true;
-                                return false;
-                            }
-                        }
-                        else{
-                            if(conditions.price.max){
                                 if(mainPrice < conditions.price.max)
                                     return true;
                                 return false;
                             }
-                            else{
-                                return true;
-                            }
-                        }
-                    })
-
-                setProductFilter(listFilter)
-            }
-        }
-        else {
-            if (conditions.size.length === 0 && conditions.color === '' && conditions.type.length === 0 && conditions.price && Object.keys(conditions.price).length === 0) {
-                setProductFilter(currentProducts)
-            }
-            else {
-                let listFilter = [...currentProducts]
-
-                if (conditions.size.length !== 0) {
-                    let listItemAdapt = []
-                    for (let i = 0; i < listFilter.length; i++) {
-                        let item = { ...listFilter[i] }  // item hiện tại
-
-                        let colorsSizes = listFilter[i].colors; // list màu của item
-
-                        let listColorAdapt = []
-
-                        for (let j = 0; j < colorsSizes.length; j++) {
-                            let colorsSizeItem = { ...colorsSizes[j] }; // màu hiện tại
-
-                            let sizes = colorsSizes[j].sizes;  // sizes của màu
-                            sizes = sizes.filter(size => conditions.size.includes(size.sizeName)) //filter size
-
-                            if (sizes.length !== 0) {
-                                colorsSizeItem.sizes = sizes
-                                listColorAdapt.push(colorsSizeItem)
-                            }
-                        }
-
-                        if (listColorAdapt.length !== 0) {
-                            item.colors = listColorAdapt
-                            listItemAdapt.push(item)
-                        }
-                    }
-                    listFilter = listItemAdapt
+                        })
+                    setProductFilter(listFilter)
                 }
-
-                if (conditions.color !== '')
-                    listFilter = listFilter.filter(item => item.colors?.map(color => color.colorName)?.includes(conditions.color))
-
-                if(conditions.price && Object.keys(conditions.price).length !== 0)
-                    listFilter = listFilter.filter(item => {
-                        const mainPrice =  item?.exportPrice * (100 - item?.discountPerc) / 100;
-                        if(conditions.price.min){
-                            if(conditions.price.max){
-                                if(mainPrice > conditions.price.min && mainPrice < conditions.price.max)
-                                    return true;
-                                return false;
-                            }
-                            else{
-                                if(mainPrice > conditions.price.min)
-                                    return true;
-                                return false;
-                            }
-                        }
-                        else{
-                            if(mainPrice < conditions.price.max)
-                                return true;
-                            return false;
-                        }
-                    })
-
-
-
-                setProductFilter(listFilter)
             }
         }
     }, [conditions])
@@ -466,6 +569,7 @@ function Collection() {
         setCloseTimer()
     }
     const notify = (type, message) => toast(message, { type: type });
+
 
     return (
         <div className={cx('wrapper')}>

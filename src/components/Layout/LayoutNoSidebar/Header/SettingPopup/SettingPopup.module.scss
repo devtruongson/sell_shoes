@@ -46,6 +46,20 @@
     flex-shrink     : 0;
 }
 
+.close{
+    display: none;
+}
+
+@media (max-width: 575.98px) { 
+    .greetHeader{
+        width: 100vw;
+
+        .close{
+            display: block;
+        }
+    }
+}
+
 .titleVoucher {
     font-weight  : 400;
     color        : #231f20;

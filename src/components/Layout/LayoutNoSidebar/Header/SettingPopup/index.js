@@ -1,4 +1,5 @@
 import classNames from "classnames/bind";
+import { IoMdClose } from "react-icons/io";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -64,13 +65,14 @@ function SettingPopup({ closeBtn }) {
         <div className={cx("container")}>
             <h1
                 className={cx("greetHeader")}
-                style={{ cursor: "pointer" }}
+                style={{cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: 'center' }}
                 onClick={() => {
                     closeBtn();
                     navigate("/");
                 }}
             >
-                Hi, Nhan Quang Le
+                <span style={{fontSize: 16}}>Hi, Nhan Quang Le</span>
+                <IoMdClose className={cx("close")} />
             </h1>
             <div className={cx("popupContentContainer")}>
                 <div className={cx("vouchersContainer")}>

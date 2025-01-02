@@ -8,3 +8,10 @@ body{
 .react-multiple-carousel__arrow{
     z-index: 100;
 }
+
+@media (max-width: 575.98px) { 
+    body{
+        width: 100vw;
+        overflow: hidden;
+    }
+}
